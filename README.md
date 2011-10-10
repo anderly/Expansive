@@ -71,7 +71,7 @@ Use the .Expand() extension method on the string to be expanded:
 	var connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
 	connectionString.Expand() // returns "server=db01-dev.mycompany.com;uid=uid;pwd=pwd;Initial Catalog=master;"
 	
-	var reportPath = ConfigurationManager.AppSettings["ReportPath"].Expand();
+	var reportPath = ConfigurationManager.AppSettings["ReportPath"];
 	reportPath.Expand() // returns "\\db01-dev.mycompany.com\SomeFileShare"
 
 ## Copyright
