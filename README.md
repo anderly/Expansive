@@ -31,14 +31,14 @@ Use the .Expand() extension method on the string to be expanded:
 
 	myStringToBeExpanded.Expand() // returns "MyAppSettingValue should be inserted here."
 	
-### Advanced Example
+### Moderate Example
 
 In app.config:
 
 	<configuration>
 		<appSettings>
-			<add key="Domain" value="domain.com"/>
-			<add key="ServerName" value="server1.${Domain}"/>
+			<add key="Domain" value="mycompany.com"/>
+			<add key="ServerName" value="db01.${Domain}"/>
 		</appSettings>
 		<connectionStrings>
 			<add name="Default" connectionString="server=${ServerName};uid=uid;pwd=pwd;Initial Catalog=master;" provider="System.Data.SqlClient" />
@@ -47,7 +47,32 @@ In app.config:
 
 Use the .Expand() extension method on the string to be expanded:
 
-	ConfigurationManager.ConnectionStrings["Default"].ConnectionString.Expand() // returns "server=server1.domain.com;uid=uid;pwd=pwd;Initial Catalog=master;"
+	var connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
+	connectionString.Expand() // returns "server=db01.mycompany.com;uid=uid;pwd=pwd;Initial Catalog=master;"
+	
+### Advanced Example
+
+In app.config:
+
+	<configuration>
+		<appSettings>
+			<add key="Environment" value="dev"/>
+			<add key="Domain" value="mycompany.com"/>
+			<add key="ServerName" value="db01-${Environment}.${Domain}"/>
+			<add key="ReportPath" value="\\${ServerName}\SomeFileShare"/>
+		</appSettings>
+		<connectionStrings>
+			<add name="Default" connectionString="server=${ServerName};uid=uid;pwd=pwd;Initial Catalog=master;" provider="System.Data.SqlClient" />
+		</connectionStrings>
+	</configuration>
+
+Use the .Expand() extension method on the string to be expanded:
+
+	var connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
+	connectionString.Expand() // returns "server=db01-dev.mycompany.com;uid=uid;pwd=pwd;Initial Catalog=master;"
+	
+	var reportPath = ConfigurationManager.AppSettings["ReportPath"].Expand();
+	reportPath.Expand() // returns "\\db01-dev.mycompany.com\SomeFileShare"
 
 ## Copyright
 
