@@ -15,11 +15,12 @@ A simple string expansion library for .NET
 
 	Install-Package Expansive
 
-* Simple Example
+### Simple Example
 
 	var myStringToBeExpanded = "${MyAppSettingKey} should be inserted here.";
 
 In app.config:
+
 	<configuration>
 		<appSettings>
 			<add key="MyAppSettingKey" value="MyAppSettingValue"/>
@@ -27,11 +28,13 @@ In app.config:
 	</configuration>
 
 Use the .Expand() extension method on the string to be expanded:
-	myStringToBeExpanded.Expand() // returns "MyAppSettingValue should be inserted here"
+
+	myStringToBeExpanded.Expand() // returns "MyAppSettingValue should be inserted here."
 	
-* Advanced Example
+### Advanced Example
 
 In app.config:
+
 	<configuration>
 		<appSettings>
 			<add key="Domain" value="domain.com"/>
@@ -43,6 +46,7 @@ In app.config:
 	</configuration>
 
 Use the .Expand() extension method on the string to be expanded:
+
 	ConfigurationManager.ConnectionStrings["Default"].ConnectionString.Expand() // returns "server=server1.domain.com;uid=uid;pwd=pwd;Initial Catalog=master;"
 
 ## Copyright
