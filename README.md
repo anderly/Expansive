@@ -4,7 +4,7 @@ A simple string expansion library for .NET
 
 ## Features
 
-* Uses a Func<string,string> factory method for where string tokens should be looked up
+* Uses a Func<string,string> factory method token lookup/expansion
 * Default string expansion factory using ConfigurationManager.AppSettings as the source
 * Register your own Func<string,string> ExpansionFactory as the default string expansion factory or specify on the call to Expand()
 * Default token start and end delimiters of '${' and '}' respectively
