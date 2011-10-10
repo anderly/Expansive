@@ -15,7 +15,7 @@ A simple string expansion library for .NET
 
 	Install-Package Expansive
 
-### Simple Example
+### Simple Example (using AppSettings as default source for token expansion)
 
 	var myStringToBeExpanded = "${MyAppSettingKey} should be inserted here.";
 
@@ -31,7 +31,7 @@ Use the .Expand() extension method on the string to be expanded:
 
 	myStringToBeExpanded.Expand() // returns "MyAppSettingValue should be inserted here."
 	
-### Moderate Example
+### Moderate Example (using AppSettings as default source for token expansion)
 
 In app.config:
 
@@ -50,7 +50,7 @@ Use the .Expand() extension method on the string to be expanded:
 	var connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
 	connectionString.Expand() // returns "server=db01.mycompany.com;uid=uid;pwd=pwd;Initial Catalog=master;"
 	
-### Advanced Example
+### Advanced Example #1 (using AppSettings as default source for token expansion)
 
 In app.config:
 
@@ -65,14 +65,21 @@ In app.config:
 			<add name="Default" connectionString="server=${ServerName};uid=uid;pwd=pwd;Initial Catalog=master;" provider="System.Data.SqlClient" />
 		</connectionStrings>
 	</configuration>
-
-Use the .Expand() extension method on the string to be expanded:
-
-	var connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
-	connectionString.Expand() // returns "server=db01-dev.mycompany.com;uid=uid;pwd=pwd;Initial Catalog=master;"
 	
-	var reportPath = ConfigurationManager.AppSettings["ReportPath"];
-	reportPath.Expand() // returns "\\db01-dev.mycompany.com\SomeFileShare"
+### Advanced Example # 2 (using custom Func<string,string> lambda as default source for token expansion)
+
+	var tokenValueDictionary = new Dictionary<string, string> {
+		{"setting1","The quick"}
+		,{"setting2","${setting1} brown fox"}
+		,{"setting3","jumped over"}
+		,{"setting4","${setting2} ${setting3} the lazy dog."}
+		,{"setting5","${setting4}"}
+	};
+
+	Expansive.SetDefaultExpansionFactory(name => tokenValueDictionary[name]);
+
+	Console.WriteLine("${setting5}".Expand());
+	//returns "The quick brown fox jumped over the lazy dog."
 
 ## Copyright
 
