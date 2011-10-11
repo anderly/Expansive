@@ -17,8 +17,6 @@ A simple string expansion library for .NET
 
 ### Simple Example (using AppSettings as default source for token expansion)
 
-	var myStringToBeExpanded = "${MyAppSettingKey} should be inserted here.";
-
 In app.config:
 
 	<configuration>
@@ -29,6 +27,7 @@ In app.config:
 
 Use the .Expand() extension method on the string to be expanded:
 
+	var myStringToBeExpanded = "${MyAppSettingKey} should be inserted here.";
 	myStringToBeExpanded.Expand() // returns "MyAppSettingValue should be inserted here."
 	
 ### Moderate Example (using AppSettings as default source for token expansion)
