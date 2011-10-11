@@ -57,13 +57,20 @@ In app.config:
 		<appSettings>
 			<add key="Environment" value="dev"/>
 			<add key="Domain" value="mycompany.com"/>
+			<add key="UserId" value="uid"/>
+			<add key="Password" value="pwd"/>
 			<add key="ServerName" value="db01-${Environment}.${Domain}"/>
 			<add key="ReportPath" value="\\${ServerName}\SomeFileShare"/>
 		</appSettings>
 		<connectionStrings>
-			<add name="Default" connectionString="server=${ServerName};uid=uid;pwd=pwd;Initial Catalog=master;" provider="System.Data.SqlClient" />
+			<add name="Default" connectionString="server=${ServerName};uid=${UserId};pwd=${Password};Initial Catalog=master;" provider="System.Data.SqlClient" />
 		</connectionStrings>
 	</configuration>
+	
+Use the .Expand() extension method on the string to be expanded:
+
+	var connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
+	connectionString.Expand() // returns "server=db01-dev.mycompany.com;uid=uid;pwd=pwd;Initial Catalog=master;"
 	
 ### Advanced Example # 2 (using custom Func<string,string> lambda as default source for token expansion)
 
