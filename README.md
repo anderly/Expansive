@@ -86,6 +86,11 @@ Use the .Expand() extension method on the string to be expanded:
 
 	Console.WriteLine("${setting5}".Expand());
 	//returns "The quick brown fox jumped over the lazy dog."
+	
+	or
+	
+	Console.WriteLine("${setting5}".Expand(name => tokenValueDictionary[name]));
+	//returns "The quick brown fox jumped over the lazy dog." 
 
 ## Copyright
 
