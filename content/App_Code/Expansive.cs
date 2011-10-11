@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 
 public static class Expansive
@@ -52,17 +53,28 @@ public static class Expansive
 
         var output = value;
         var tokenBeginPosition = output.IndexOf(startToken);
+        var calls = new Stack<string>();
 
         while (tokenBeginPosition != -1)
         {
             var tokenEndPosition = output.IndexOf(endToken, tokenBeginPosition);
 
             var tempKey = output.Substring(tokenBeginPosition + startToken.Length, (tokenEndPosition - (tokenBeginPosition + startToken.Length)));
+            if (calls.Contains(tempKey)) throw new CircularReferenceException("Token '${tempKey}' was encountered more than once.".Expand(name => tempKey));
+            calls.Push(tempKey);
             var tempNewKey = expansionFactory(tempKey);
             output = output.Replace(string.Concat(startToken, tempKey, endToken), tempNewKey);
             tokenBeginPosition = output.IndexOf(startToken);
         }
+        calls.Clear();
 
         return output;
+    }
+}
+
+public class CircularReferenceException : Exception
+{
+    public CircularReferenceException(string message) : base(message)
+    {
     }
 }
