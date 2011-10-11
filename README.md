@@ -15,6 +15,8 @@ A simple string expansion library for .NET
 
 	Install-Package Expansive
 
+### Simple Example (named string formatting)
+
 ### Simple Example (using AppSettings as default source for token expansion)
 
 In app.config:
@@ -98,4 +100,4 @@ Copyright 2011 Adam Anderly
 
 ## License
 
-MS-PL
+MS-PL: http://www.opensource.org/licenses/MS-PL
