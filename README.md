@@ -17,6 +17,9 @@ A simple string expansion library for .NET
 
 ### Simple Example (named string formatting)
 
+	"Hello, ${name}".Expand(n => "John")
+	// returns "Hello, John"
+
 ### Simple Example (using AppSettings as default source for token expansion)
 
 In app.config:
