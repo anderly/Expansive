@@ -2,12 +2,18 @@
 
 A simple string expansion library for .NET
 
+# Release 1.2 Notes
+
+- **Breaking Change:** Changed default token start and end delimiters to '{' and '}'.
+- Corrected circular reference detection logic.
+- Added additional Expand() method to serve as alternative to string.Format()
+
 ## Features
 
 * Uses a Func<string,string> factory method token lookup/expansion
 * Default string expansion factory using ConfigurationManager.AppSettings as the source
 * Register your own Func<string,string> ExpansionFactory as the default string expansion factory or specify on the call to Expand()
-* Default token start and end delimiters of '${' and '}' respectively
+* Default token start and end delimiters of '{' and '}' respectively
 * Register your own default token start and end delimiters or specify on the call to Expand()
 * Support for chained expansions from one value to another
 
@@ -15,12 +21,27 @@ A simple string expansion library for .NET
 
 	Install-Package Expansive
 
-### Simple Example (named string formatting)
+### Simple Example #1 (named string formatting)
 
-	"Hello, ${name}".Expand(n => "John")
+	"Hello, {name}".Expand(n => "John")
 	// returns "Hello, John"
+	
+### Simple Example #2 (named string formatting / alternative to string.Format())
 
-### Simple Example (using AppSettings as default source for token expansion)
+	"Hello, {name}".Expand("John")
+	// returns "Hello, John"
+	
+### Simple Example #3 (named string formatting / alternative to string.Format())
+
+	"Hello, {firstName} {lastName}".Expand("John","Smith")
+	// returns "Hello, John Smith"
+	
+### Simple Example #4 (named string formatting / alternative to string.Format())
+
+	"Your first name is {firstName}. Your last name is {lastName}. Your full name is {fullName}".Expand("John","Smith", "{firstName} {lastName}")
+	// returns "Your first name is John. Your last name is Smith. Your full name is John Smith"
+
+### Simple Example #5 (using AppSettings as default source for token expansion)
 
 In app.config:
 
@@ -32,7 +53,7 @@ In app.config:
 
 Use the .Expand() extension method on the string to be expanded:
 
-	var myStringToBeExpanded = "${MyAppSettingKey} should be inserted here.";
+	var myStringToBeExpanded = "{MyAppSettingKey} should be inserted here.";
 	myStringToBeExpanded.Expand() // returns "MyAppSettingValue should be inserted here."
 	
 ### Moderate Example (using AppSettings as default source for token expansion)
@@ -42,10 +63,10 @@ In app.config:
 	<configuration>
 		<appSettings>
 			<add key="Domain" value="mycompany.com"/>
-			<add key="ServerName" value="db01.${Domain}"/>
+			<add key="ServerName" value="db01.{Domain}"/>
 		</appSettings>
 		<connectionStrings>
-			<add name="Default" connectionString="server=${ServerName};uid=uid;pwd=pwd;Initial Catalog=master;" provider="System.Data.SqlClient" />
+			<add name="Default" connectionString="server={ServerName};uid=uid;pwd=pwd;Initial Catalog=master;" provider="System.Data.SqlClient" />
 		</connectionStrings>
 	</configuration>
 
@@ -64,11 +85,11 @@ In app.config:
 			<add key="Domain" value="mycompany.com"/>
 			<add key="UserId" value="uid"/>
 			<add key="Password" value="pwd"/>
-			<add key="ServerName" value="db01-${Environment}.${Domain}"/>
-			<add key="ReportPath" value="\\${ServerName}\SomeFileShare"/>
+			<add key="ServerName" value="db01-{Environment}.{Domain}"/>
+			<add key="ReportPath" value="\\{ServerName}\SomeFileShare"/>
 		</appSettings>
 		<connectionStrings>
-			<add name="Default" connectionString="server=${ServerName};uid=${UserId};pwd=${Password};Initial Catalog=master;" provider="System.Data.SqlClient" />
+			<add name="Default" connectionString="server={ServerName};uid={UserId};pwd={Password};Initial Catalog=master;" provider="System.Data.SqlClient" />
 		</connectionStrings>
 	</configuration>
 	
@@ -81,20 +102,20 @@ Use the .Expand() extension method on the string to be expanded:
 
 	var tokenValueDictionary = new Dictionary<string, string> {
 		{"setting1","The quick"}
-		,{"setting2","${setting1} brown fox"}
+		,{"setting2","{setting1} brown fox"}
 		,{"setting3","jumped over"}
-		,{"setting4","${setting2} ${setting3} the lazy dog."}
-		,{"setting5","${setting4}"}
+		,{"setting4","{setting2} {setting3} the lazy dog."}
+		,{"setting5","{setting4}"}
 	};
 
 	Expansive.SetDefaultExpansionFactory(name => tokenValueDictionary[name]);
 
-	Console.WriteLine("${setting5}".Expand());
+	Console.WriteLine("{setting5}".Expand());
 	//returns "The quick brown fox jumped over the lazy dog."
 	
 	or
 	
-	Console.WriteLine("${setting5}".Expand(name => tokenValueDictionary[name]));
+	Console.WriteLine("{setting5}".Expand(name => tokenValueDictionary[name]));
 	//returns "The quick brown fox jumped over the lazy dog." 
 
 ## Copyright

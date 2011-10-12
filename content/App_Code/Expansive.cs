@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Text.RegularExpressions;
 
 public static class Expansive
 {
     private static Func<string, string> _expansionFactory;
-    private static string _startToken = "${";
+    private static string _startToken = "{";
     private static string _endToken = "}";
 
     static Expansive()
@@ -30,9 +31,47 @@ public static class Expansive
         return Expand(source, _expansionFactory);
     }
 
-    public static string Expand(this string source, string startToken, string endToken)
+    public static string Expand(this string source, params string[] args)
     {
-        return ExpandInternal(source, _expansionFactory, startToken, endToken);
+        var output = source;
+        var tokens = new List<string>();
+        var pattern = new Regex(@"\" + _startToken + "([^" + _endToken + "][^0-9{1,2}]+[^" + _endToken + @"])\" + _endToken, RegexOptions.IgnoreCase);
+
+        while (pattern.IsMatch(output))
+        {
+            foreach (Match match in pattern.Matches(output))
+            {
+                var token = match.Value.Replace(_startToken, "").Replace(_endToken, "");
+                var tokenIndex = 0;
+                if (!tokens.Contains(token))
+                {
+                    tokens.Add(token);
+                    tokenIndex = tokens.Count - 1;
+                }
+                else
+                {
+                    tokenIndex = tokens.IndexOf(token);
+                }
+                output = Regex.Replace(output, _startToken + token + _endToken, "{" + tokenIndex + "}");
+            }
+        }
+        var newArgs = new List<string>();
+        foreach (var arg in args)
+        {
+            var newArg = arg;
+            var tokenPattern = new Regex(@"\" + _startToken + String.Join("|", tokens) + @"\" + _endToken);
+            while (tokenPattern.IsMatch(newArg))
+            {
+                foreach (Match match in tokenPattern.Matches(newArg))
+                {
+                    var token = match.Value.Replace(_startToken, "").Replace(_endToken, "");
+                    newArg = Regex.Replace(newArg, _startToken + token + _endToken, args[tokens.IndexOf(token)]);
+                }
+                
+            }
+            newArgs.Add(newArg);
+        }
+        return string.Format(output, newArgs.ToArray());
     }
 
     public static string Expand(this string source, Func<string, string> expansionFactory)
@@ -54,17 +93,19 @@ public static class Expansive
         var output = value;
         var tokenBeginPosition = output.IndexOf(startToken);
         var calls = new Stack<string>();
+        string callingKey = null;
 
         while (tokenBeginPosition != -1)
         {
             var tokenEndPosition = output.IndexOf(endToken, tokenBeginPosition);
 
             var tempKey = output.Substring(tokenBeginPosition + startToken.Length, (tokenEndPosition - (tokenBeginPosition + startToken.Length)));
-            if (calls.Contains(tempKey)) throw new CircularReferenceException("Token '${tempKey}' was encountered more than once.".Expand(name => tempKey));
-            calls.Push(tempKey);
+            if (calls.Contains(string.Format("{0}:{1}", callingKey, tempKey))) throw new CircularReferenceException("Circular Reference Detected for token '{callingKey}'.".Expand(callingKey));
+            calls.Push(string.Format("{0}:{1}", callingKey, tempKey));
             var tempNewKey = expansionFactory(tempKey);
             output = output.Replace(string.Concat(startToken, tempKey, endToken), tempNewKey);
             tokenBeginPosition = output.IndexOf(startToken);
+            callingKey = tempKey;
         }
         calls.Clear();
 
@@ -74,7 +115,8 @@ public static class Expansive
 
 public class CircularReferenceException : Exception
 {
-    public CircularReferenceException(string message) : base(message)
+    public CircularReferenceException(string message)
+        : base(message)
     {
     }
 }
