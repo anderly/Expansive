@@ -47,7 +47,10 @@ A powerful string expansion library for .NET that you never knew you always want
 	
 ### Simple Example #4 (named string formatting / alternative to string.Format())
 
-	"Your first name is {firstName}. Your last name is {lastName}. Your full name is {fullName}".Expand("John","Smith", "{firstName} {lastName}")
+	var firstName = "John";
+	var lastName = "Smith";
+	var fullName = "{firstName} {lastName}";
+	"Your first name is {firstName}. Your last name is {lastName}. Your full name is {fullName}".Expand(fullName, lastName, fullName)
 	// returns "Your first name is John. Your last name is Smith. Your full name is John Smith"
 
 ### Simple Example #5 (using AppSettings as default source for token expansion)
