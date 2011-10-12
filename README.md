@@ -1,12 +1,21 @@
 # Expansive
 
-A simple string expansion library for .NET
+A powerful string expansion library for .NET that you never knew you always wanted.
 
 # Release 1.2 Notes
 
 - **Breaking Change:** Changed default token start and end delimiters to '{' and '}'.
 - Corrected circular reference detection logic.
-- Added additional Expand() method to serve as alternative to string.Format()
+- Added additional Expand(params string[] args) method to serve as alternative to string.Format()
+- Removed Expand(startToken, endToken) method
+
+## Benefits
+
+- Use as a more readable alternative to string.Format()
+- Easily embed appSettings tokens in strings and expand them easily.
+- Chain together appSettings tokens to reduce redundant values.
+- Embed appSettings tokens in connection strings to make them more dynamic.
+- Use your imagination.
 
 ## Features
 
