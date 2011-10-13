@@ -67,7 +67,7 @@ public static class Expansive
                     var token = match.Value.Replace(_startToken, "").Replace(_endToken, "");
                     newArg = Regex.Replace(newArg, _startToken + token + _endToken, args[tokens.IndexOf(token)]);
                 }
-                
+
             }
             newArgs.Add(newArg);
         }
