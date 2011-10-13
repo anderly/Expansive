@@ -1,6 +1,9 @@
 # Expansive
 
-A powerful string expansion library for .NET that you never knew you always wanted.
+A powerful string expansion library for .NET you never knew you always wanted.
+
+# Release 1.3 Notes
+- Added Dynamic ConfigurationManager wrapper class "Config" which can be used to extract app settings and connection strings with automatic expansion support.
 
 # Release 1.2 Notes
 
