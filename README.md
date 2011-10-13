@@ -21,6 +21,7 @@ A powerful string expansion library for .NET that you never knew you always want
 
 * Uses a Func<string,string> factory method token lookup/expansion
 * Default string expansion factory using ConfigurationManager.AppSettings as the source
+* Dynamic ConfigurationManager wrapper called Config
 * Register your own Func<string,string> ExpansionFactory as the default string expansion factory or specify on the call to Expand()
 * Default token start and end delimiters of '{' and '}' respectively
 * Register your own default token start and end delimiters or specify on the call to Expand()
@@ -63,7 +64,7 @@ In app.config:
 		</appSettings>
 	</configuration>
 
-Use the .Expand() extension method on the string to be expanded:
+Use the .Expand() extension method explicitly on the string to be expanded:
 
 	var myStringToBeExpanded = "{MyAppSettingKey} should be inserted here.";
 	myStringToBeExpanded.Expand() // returns "MyAppSettingValue should be inserted here."
@@ -86,6 +87,16 @@ Use the .Expand() extension method on the string to be expanded:
 
 	var connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
 	connectionString.Expand() // returns "server=db01.mycompany.com;uid=uid;pwd=pwd;Initial Catalog=master;"
+
+or
+
+Use the Dynamic ConfigurationManager wrapper "Config" as follows (Explicit call to Expand() not necessary):
+
+	var serverName = Config.AppSettings.ServerName;
+	// returns "db01.mycompany.com"
+	
+	var connectionString = Config.ConnectionStrings.Default;
+	// returns "server=db01.mycompany.com;uid=uid;pwd=pwd;Initial Catalog=master;"
 	
 ### Advanced Example #1 (using AppSettings as default source for token expansion)
 
