@@ -2,6 +2,9 @@
 
 A powerful string expansion library for .NET you never knew you always wanted.
 
+# Release 1.4 Notes
+- Added new Expand(object model) method to allow passing in an object whose properties correspond to tokens in a string.
+
 # Release 1.3 Notes
 - Added Dynamic ConfigurationManager wrapper class "Config" which can be used to extract app settings and connection strings with automatic expansion support.
 
