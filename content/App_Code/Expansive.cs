@@ -46,6 +46,11 @@ public static class Expansive
 		return Expand(source, _expansionFactory);
 	}
 
+	public static string Expand(this string source, TokenStyle tokenStyle)
+	{
+		return ExpandInternal(source, _expansionFactory, tokenStyle);
+	}
+
 	public static string Expand(this string source, params string[] args)
 	{
 		var output = source;
@@ -100,14 +105,9 @@ public static class Expansive
 		return ExpandInternal(source, expansionFactory, _tokenStyle);
 	}
 
-	public static string Expand(this string source, TokenStyle tokenStyle)
+	public static string Expand(this string source, Func<string, string> expansionFactory, TokenStyle tokenStyle)
 	{
-		return ExpandInternal(source, _expansionFactory, tokenStyle);
-	}
-
-	public static string Expand(this string source, TokenStyle tokenPattern, Func<string, string> expansionFactory)
-	{
-		return ExpandInternal(source, expansionFactory, tokenPattern);
+		return ExpandInternal(source, expansionFactory, tokenStyle);
 	}
 
 	public static string Expand(this string source, object model)
@@ -115,9 +115,9 @@ public static class Expansive
 		return ExpandInternal(source, name => model.ToDictionary()[name].ToString(), _tokenStyle);
 	}
 
-	public static string Expand(this string source, object model, TokenStyle tokenPattern)
+	public static string Expand(this string source, object model, TokenStyle tokenStyle)
 	{
-		return ExpandInternal(source, name => model.ToDictionary()[name].ToString(), tokenPattern);
+		return ExpandInternal(source, name => model.ToDictionary()[name].ToString(), tokenStyle);
 	}
 
 	#region : Private Helper Methods :
