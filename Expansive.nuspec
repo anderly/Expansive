@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>Expansive</id>
+    <version>1.5</version>
+    <title>Expansive</title>
+    <authors>Adam Anderly</authors>
+    <owners>Adam Anderly</owners>
+    <licenseUrl>http://www.opensource.org/licenses/MS-PL</licenseUrl>
+    <projectUrl>https://github.com/anderly/Expansive</projectUrl>
+    <iconUrl>https://github.com/anderly/Expansive/raw/master/expansive.png</iconUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>A powerful string expansion library for .NET you never knew you always wanted.
+
+- Use for token-based string templating passing in a model for property replacement
+- 4 token formats to pick from (MvcRoute-style, Razor-style, NAnt-style or MSBuild-style)
+- Use as a more readable alternative to string.Format()
+- Easily embed appSettings tokens in strings and expand them easily.
+- Chain together appSettings tokens to reduce redundant values.
+- Embed appSettings tokens in connection strings to make them more dynamic.
+- Use your imagination.
+
+Check out the readme file located here: http://github.com/anderly/Expansive to find out more.</description>
+    <summary>A powerful string expansion library for .NET you never knew you always wanted.</summary>
+    <releaseNotes>Added **TokenStyle** Enum to select from 4 common token formats (MvcRoute-style, Razor-style, NAnt-style, MSBuild-style)</releaseNotes>
+    <tags>.net asp.net mvc mvc3</tags>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Configuration" targetFramework=".NETFramework4.0" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="content\App_Code\Config.cs" target="content\App_Code\Config.cs" />
+    <file src="content\App_Code\Expansive.cs" target="content\App_Code\Expansive.cs" />
+  </files>
+</package>

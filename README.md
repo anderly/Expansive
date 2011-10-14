@@ -2,6 +2,10 @@
 
 A powerful string expansion library for .NET you never knew you always wanted.
 
+# Release 1.5 Notes
+- **Breaking Change:** Removed startToken and endToken delimiters (Now use the TokenStyle Enum to select from MvcRoute style tokens, Razor style, NAnt style or MSBuild style)
+- Added **TokenStyle** Enum to select from 4 common token formats (MvcRoute-style, Razor-style, NAnt-style, MSBuild-style)
+
 # Release 1.4 Notes
 - Added new Expand(object model) method to allow passing in an object whose properties correspond to tokens in a string.
 
@@ -25,21 +29,45 @@ A powerful string expansion library for .NET you never knew you always wanted.
 
 ## Features
 
-* Uses a Func<string,string> factory method token lookup/expansion
+* Uses a Func<string,string> lambda factory method for token lookup/expansion
 * Default string expansion factory using ConfigurationManager.AppSettings as the source
-* Dynamic ConfigurationManager wrapper called Config
+* Dynamic ConfigurationManager wrapper called Config wraps the Expansive API and removes need to call Expand()
 * Register your own Func<string,string> ExpansionFactory as the default string expansion factory or specify on the call to Expand()
-* Default token start and end delimiters of '{' and '}' respectively
-* Register your own default token start and end delimiters or specify on the call to Expand()
+* 4 Token Style Formats to pick from:
+ - MvcRoute Style "{token}" (default)
+ - Razor Style    "@token" or "@(token)"
+ - NAnt Style     "${token}"
+ - MSBuild Style  "@(token)"
+* Set your TokenStyle format globally or on a per call basis on the call to Expand()
 * Support for chained expansions from one value to another
 
 ## Usage
 
 	Install-Package Expansive
 
-### Simple Example #1 (named string formatting)
+### Simple MvcRoute-style Example #1 (named string formatting)
 
 	"Hello, {name}".Expand(n => "John")
+	// returns "Hello, John"
+	
+### Simple Razor-style Example #1 (named string formatting)
+
+	"Hello, @name".Expand(n => "John")
+	// returns "Hello, John"
+	
+or
+	
+	"Hello, @(name)".Expand(n => "John")
+	// returns "Hello, John"
+	
+### Simple NAnt-style Example #1 (named string formatting)
+
+	"Hello, ${name}".Expand(n => "John")
+	// returns "Hello, John"
+	
+### Simple MSBuild-style Example #1 (named string formatting)
+
+	"Hello, $(name)".Expand(n => "John")
 	// returns "Hello, John"
 	
 ### Simple Example #2 (named string formatting / alternative to string.Format())
