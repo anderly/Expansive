@@ -36,6 +36,8 @@ public static class Expansive
         var output = source;
         var tokens = new List<string>();
         var pattern = new Regex(@"\" + _startToken + "([^" + _endToken + "][^0-9{1,2}]+[^" + _endToken + @"])\" + _endToken, RegexOptions.IgnoreCase);
+        var calls = new Stack<string>();
+        string callingToken = null;
 
         while (pattern.IsMatch(output))
         {
@@ -65,6 +67,9 @@ public static class Expansive
                 foreach (Match match in tokenPattern.Matches(newArg))
                 {
                     var token = match.Value.Replace(_startToken, "").Replace(_endToken, "");
+                    if (calls.Contains(string.Format("{0}:{1}", callingToken, token))) throw new CircularReferenceException("Circular Reference Detected for token '{callingToken}'.".Expand(callingToken));
+                    calls.Push(string.Format("{0}:{1}", callingToken, token));
+                    callingToken = token;
                     newArg = Regex.Replace(newArg, _startToken + token + _endToken, args[tokens.IndexOf(token)]);
                 }
 
@@ -90,23 +95,24 @@ public static class Expansive
         if (string.IsNullOrWhiteSpace(endToken)) throw new ArgumentOutOfRangeException("endToken", "endToken cannot be null or empty");
         if (expansionFactory == null) throw new ApplicationException("ExpansionFactory not defined.\nUse SetDefaultExpansionFactory(Func<string, string> expansionFactory) to define a default ExpansionFactory or call Expand(source, Func<string, string> expansionFactory))");
 
+        var pattern = new Regex(@"\" + startToken + @"\w+\" + endToken);
         var output = value;
-        var tokenBeginPosition = output.IndexOf(startToken);
         var calls = new Stack<string>();
-        string callingKey = null;
+        string callingToken = null;
 
-        while (tokenBeginPosition != -1)
+        while (pattern.IsMatch(output))
         {
-            var tokenEndPosition = output.IndexOf(endToken, tokenBeginPosition);
-
-            var tempKey = output.Substring(tokenBeginPosition + startToken.Length, (tokenEndPosition - (tokenBeginPosition + startToken.Length)));
-            if (calls.Contains(string.Format("{0}:{1}", callingKey, tempKey))) throw new CircularReferenceException("Circular Reference Detected for token '{callingKey}'.".Expand(callingKey));
-            calls.Push(string.Format("{0}:{1}", callingKey, tempKey));
-            var tempNewKey = expansionFactory(tempKey);
-            output = output.Replace(string.Concat(startToken, tempKey, endToken), tempNewKey);
-            tokenBeginPosition = output.IndexOf(startToken);
-            callingKey = tempKey;
+            foreach (Match match in pattern.Matches(output))
+            {
+                var token = match.Value.Replace(_startToken, "").Replace(_endToken, "");
+                if (calls.Contains(string.Format("{0}:{1}", callingToken, token))) throw new CircularReferenceException("Circular Reference Detected for token '{callingToken}'.".Expand(callingToken));
+                calls.Push(string.Format("{0}:{1}", callingToken, token));
+                var nextToken = expansionFactory(token);
+                output = Regex.Replace(output, _startToken + token + _endToken, nextToken);
+                callingToken = token;
+            }
         }
+
         calls.Clear();
 
         return output;
