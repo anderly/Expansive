@@ -142,7 +142,7 @@ public static class Expansive
 		                			                  	{
 		                			                  		TokenMatchPattern = @"@([a-zA-Z]\w*|\([a-zA-Z]\w*\))",
 		                			                  		TokenReplaceFilter = token => token.Replace("@", "").Replace("(", "").Replace(")", ""),
-		                			                  		OutputFilter = output => output.Replace("(", @"\(").Replace(")", @"\)"),
+		                			                  		OutputFilter = output => (output.StartsWith("@") ? output.Replace("(", @"\(").Replace(")",@"\)") : "@" + output.Replace("(", @"\(").Replace(")",@"\)")),
 															TokenFilter = tokens => @"@(" + tokens + @"|\(" + tokens + @"\))"
 		                			                  	}
 		                			}
@@ -176,23 +176,40 @@ public static class Expansive
 		var patternStyle = patternStyles[tokenStyle];
 		var pattern = new Regex(patternStyle.TokenMatchPattern, RegexOptions.IgnoreCase);
 		var output = value;
-		var calls = new Stack<string>();
-		string callingToken = null;
+		var tokens = new Dictionary<string, string>();
 
-		while (pattern.IsMatch(output))
+		if (pattern.IsMatch(output))
 		{
 			foreach (Match match in pattern.Matches(output))
 			{
-				var token = patternStyle.TokenReplaceFilter(match.Value);
-				if (calls.Contains(string.Format("{0}:{1}", callingToken, token))) throw new CircularReferenceException(string.Format("Circular Reference Detected for token '{0}'.", callingToken));
-				calls.Push(string.Format("{0}:{1}", callingToken, token));
-				var nextToken = expansionFactory(token);
-				output = Regex.Replace(output, patternStyle.OutputFilter(match.Value), nextToken);
-				callingToken = token;
+				var token = match.Value;
+				if (!tokens.ContainsKey(token))
+				{
+					tokens.Add(token, string.Empty);
+				}
 			}
 		}
 
-		calls.Clear();
+		foreach(var entry in tokens)
+		{
+			var currentToken = entry.Key;
+			var expandedValue = currentToken;
+			var calls = new Stack<string>();
+
+			while (pattern.IsMatch(expandedValue))
+			{
+				foreach (Match match in pattern.Matches(expandedValue))
+				{
+					var token = patternStyle.TokenReplaceFilter(match.Value);
+					if (calls.Contains(token)) throw new CircularReferenceException(string.Format("Circular Reference Detected for token '{0}'.", currentToken));
+					calls.Push(token);
+					var nextToken = expansionFactory(token);
+
+					expandedValue = Regex.Replace(expandedValue, patternStyle.OutputFilter(match.Value), nextToken);
+				}
+			}
+			output = Regex.Replace(output, patternStyle.OutputFilter(currentToken), expandedValue);
+		}
 
 		return output;
 	}
