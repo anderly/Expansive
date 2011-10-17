@@ -176,41 +176,42 @@ public static class Expansive
 		var patternStyle = patternStyles[tokenStyle];
 		var pattern = new Regex(patternStyle.TokenMatchPattern, RegexOptions.IgnoreCase);
 		var output = value;
-		var tokens = new Dictionary<string, string>();
 
-		if (pattern.IsMatch(output))
+		var callTree = new Tree<string>("root");
+		var parentNode = callTree.Root;
+
+		return output.Explode(pattern, patternStyle, expansionFactory, parentNode);
+	}
+
+	private static bool HasChildren(this string token, Regex pattern)
+	{
+		return pattern.IsMatch(token);
+	}
+
+	private static string Explode(this string source, Regex pattern, PatternStyle patternStyle, Func<string, string> expansionFactory, TreeNode<string> parent)
+	{
+		var output = source;
+		while (output.HasChildren(pattern))
 		{
-			foreach (Match match in pattern.Matches(output))
+			foreach (Match match in pattern.Matches(source))
 			{
-				var token = match.Value;
-				if (!tokens.ContainsKey(token))
+				var child = match.Value;
+				var token = patternStyle.TokenReplaceFilter(match.Value);
+				var thisNode = parent.Children.Add(token);
+				// if we have already encountered this token in this call tree, we have a circular reference
+				if (thisNode.CallTree.Contains(token))
+					throw new CircularReferenceException(string.Format("Circular Reference Detected for token '{0}'. Call Tree: {1}>{2}",
+																	   token,
+					                                                   String.Join(">", thisNode.CallTree.ToArray().Reverse()), token));
+				var nextToken = expansionFactory(token);
+				child = Regex.Replace(child, patternStyle.OutputFilter(match.Value), nextToken);
+				while (child.HasChildren(pattern))
 				{
-					tokens.Add(token, string.Empty);
+					child = child.Explode(pattern, patternStyle, expansionFactory, thisNode);
 				}
+				output = Regex.Replace(output, patternStyle.OutputFilter(match.Value), child);
 			}
 		}
-
-		foreach(var entry in tokens)
-		{
-			var currentToken = entry.Key;
-			var expandedValue = currentToken;
-			var calls = new Stack<string>();
-
-			while (pattern.IsMatch(expandedValue))
-			{
-				foreach (Match match in pattern.Matches(expandedValue))
-				{
-					var token = patternStyle.TokenReplaceFilter(match.Value);
-					if (calls.Contains(token)) throw new CircularReferenceException(string.Format("Circular Reference Detected for token '{0}'.", currentToken));
-					calls.Push(token);
-					var nextToken = expansionFactory(token);
-
-					expandedValue = Regex.Replace(expandedValue, patternStyle.OutputFilter(match.Value), nextToken);
-				}
-			}
-			output = Regex.Replace(output, patternStyle.OutputFilter(currentToken), expandedValue);
-		}
-
 		return output;
 	}
 
@@ -269,12 +270,158 @@ public class CircularReferenceException : Exception
 
 #region : Internal Members :
 
-internal class PatternStyle
-{
-	public string TokenMatchPattern { get; set; }
-	public Func<string, string> TokenFilter { get; set; }
-	public Func<string, string> TokenReplaceFilter { get; set; }
-	public Func<string, string> OutputFilter { get; set; }
-}
+	#region : PatternStyle :
+
+	internal class PatternStyle
+	{
+		public string TokenMatchPattern { get; set; }
+		public Func<string, string> TokenFilter { get; set; }
+		public Func<string, string> TokenReplaceFilter { get; set; }
+		public Func<string, string> OutputFilter { get; set; }
+	}
+
+	#endregion
+
+	#region : Tree :
+
+	internal class Tree<T> : TreeNode<T>
+	{
+		public Tree(T RootValue)
+			: base(RootValue)
+		{
+			Value = RootValue;
+		}
+	}
+
+	#endregion : Tree :
+
+	#region : TreeNode :
+
+	internal class TreeNode<T>
+	{
+		private TreeNode<T> _Parent;
+		public TreeNode<T> Parent
+		{
+			get { return _Parent; }
+			set
+			{
+				if (value == _Parent)
+				{
+					return;
+				}
+
+				if (_Parent != null)
+				{
+					_Parent.Children.Remove(this);
+				}
+
+				if (value != null && !value.Children.Contains(this))
+				{
+					value.Children.Add(this);
+				}
+
+				_Parent = value;
+			}
+		}
+
+		public TreeNode<T> Root
+		{
+			get
+			{
+				//return (Parent == null) ? this : Parent.Root;
+
+				TreeNode<T> node = this;
+				while (node.Parent != null)
+				{
+					node = node.Parent;
+				}
+				return node;
+			}
+		}
+
+		private TreeNodeList<T> _Children;
+		public TreeNodeList<T> Children
+		{
+			get { return _Children; }
+			private set { _Children = value; }
+		}
+
+		private List<T> _CallTree;
+		public List<T> CallTree
+		{
+			get
+			{
+				_CallTree = new List<T>();
+				TreeNode<T> node = this;
+				while (node.Parent != null)
+				{
+					node = node.Parent;
+					_CallTree.Add(node.Value);
+				}
+				return _CallTree;
+			}
+			private set { _CallTree = value; }
+		}
+
+		private T _Value;
+		public T Value
+		{
+			get { return _Value; }
+			set
+			{
+				_Value = value;
+			}
+		}
+
+		public TreeNode(T Value)
+		{
+			this.Value = Value;
+			Parent = null;
+			Children = new TreeNodeList<T>(this);
+			_CallTree = new List<T>();
+		}
+
+		public TreeNode(T Value, TreeNode<T> Parent)
+		{
+			this.Value = Value;
+			this.Parent = Parent;
+			Children = new TreeNodeList<T>(this);
+			_CallTree = new List<T>();
+		}
+	}
+
+	#endregion : TreeNode :
+
+	#region : TreeNodeList :
+
+	internal class TreeNodeList<T> : List<TreeNode<T>>
+	{
+		public TreeNode<T> Parent;
+
+		public TreeNodeList(TreeNode<T> Parent)
+		{
+			this.Parent = Parent;
+		}
+
+		public new TreeNode<T> Add(TreeNode<T> Node)
+		{
+			base.Add(Node);
+			Node.Parent = Parent;
+			return Node;
+		}
+
+		public TreeNode<T> Add(T Value)
+		{
+			return Add(new TreeNode<T>(Value));
+		}
+
+
+		public override string ToString()
+		{
+			return "Count=" + Count.ToString();
+		}
+	}
+
+	#endregion : TreeNodeList :
 
 #endregion
