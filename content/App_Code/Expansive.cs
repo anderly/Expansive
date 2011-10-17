@@ -43,12 +43,12 @@ public static class Expansive
 
 	public static string Expand(this string source)
 	{
-		return Expand(source, _expansionFactory);
+		return source.Expand(_expansionFactory);
 	}
 
 	public static string Expand(this string source, TokenStyle tokenStyle)
 	{
-		return ExpandInternal(source, _expansionFactory, tokenStyle);
+		return source.ExpandInternal(_expansionFactory, tokenStyle);
 	}
 
 	public static string Expand(this string source, params string[] args)
@@ -102,22 +102,22 @@ public static class Expansive
 
 	public static string Expand(this string source, Func<string, string> expansionFactory)
 	{
-		return ExpandInternal(source, expansionFactory, _tokenStyle);
+		return source.ExpandInternal(expansionFactory, _tokenStyle);
 	}
 
 	public static string Expand(this string source, Func<string, string> expansionFactory, TokenStyle tokenStyle)
 	{
-		return ExpandInternal(source, expansionFactory, tokenStyle);
+		return source.ExpandInternal(expansionFactory, tokenStyle);
 	}
 
 	public static string Expand(this string source, object model)
 	{
-		return ExpandInternal(source, name => model.ToDictionary()[name].ToString(), _tokenStyle);
+		return source.ExpandInternal(name => model.ToDictionary()[name].ToString(), _tokenStyle);
 	}
 
 	public static string Expand(this string source, object model, TokenStyle tokenStyle)
 	{
-		return ExpandInternal(source, name => model.ToDictionary()[name].ToString(), tokenStyle);
+		return source.ExpandInternal(name => model.ToDictionary()[name].ToString(), tokenStyle);
 	}
 
 	#region : Private Helper Methods :
@@ -169,23 +169,16 @@ public static class Expansive
 		                	};
 	}
 
-	private static string ExpandInternal(string value, Func<string, string> expansionFactory, TokenStyle tokenStyle)
+	private static string ExpandInternal(this string source, Func<string, string> expansionFactory, TokenStyle tokenStyle)
 	{
 		if (expansionFactory == null) throw new ApplicationException("ExpansionFactory not defined.\nUse SetDefaultExpansionFactory(Func<string, string> expansionFactory) to define a default ExpansionFactory or call Expand(source, Func<string, string> expansionFactory))");
 
 		var patternStyle = patternStyles[tokenStyle];
 		var pattern = new Regex(patternStyle.TokenMatchPattern, RegexOptions.IgnoreCase);
-		var output = value;
 
-		var callTree = new Tree<string>("root");
-		var parentNode = callTree.Root;
+		var callTreeParent = new Tree<string>("root").Root;
 
-		return output.Explode(pattern, patternStyle, expansionFactory, parentNode);
-	}
-
-	private static bool HasChildren(this string token, Regex pattern)
-	{
-		return pattern.IsMatch(token);
+		return source.Explode(pattern, patternStyle, expansionFactory, callTreeParent);
 	}
 
 	private static string Explode(this string source, Regex pattern, PatternStyle patternStyle, Func<string, string> expansionFactory, TreeNode<string> parent)
@@ -197,22 +190,31 @@ public static class Expansive
 			{
 				var child = match.Value;
 				var token = patternStyle.TokenReplaceFilter(match.Value);
+
 				var thisNode = parent.Children.Add(token);
+
 				// if we have already encountered this token in this call tree, we have a circular reference
 				if (thisNode.CallTree.Contains(token))
 					throw new CircularReferenceException(string.Format("Circular Reference Detected for token '{0}'. Call Tree: {1}>{2}",
 																	   token,
 					                                                   String.Join(">", thisNode.CallTree.ToArray().Reverse()), token));
-				var nextToken = expansionFactory(token);
-				child = Regex.Replace(child, patternStyle.OutputFilter(match.Value), nextToken);
-				while (child.HasChildren(pattern))
-				{
-					child = child.Explode(pattern, patternStyle, expansionFactory, thisNode);
-				}
+
+				// Replace the match with the expanded value
+				child = Regex.Replace(child, patternStyle.OutputFilter(match.Value), expansionFactory(token));
+
+				// Recursively expand the child until we no longer encounter nested tokens (or hit a circular reference)
+				child = child.Explode(pattern, patternStyle, expansionFactory, thisNode);
+
+				// finally, replace the match in the output with the fully-expanded value
 				output = Regex.Replace(output, patternStyle.OutputFilter(match.Value), child);
 			}
 		}
 		return output;
+	}
+
+	private static bool HasChildren(this string token, Regex pattern)
+	{
+		return pattern.IsMatch(token);
 	}
 
 	/// <summary>
@@ -222,8 +224,8 @@ public static class Expansive
 	{
 		var result = new ExpandoObject();
 		var d = result as IDictionary<string, object>; //work with the Expando as a Dictionary
-		if (o.GetType() == typeof(ExpandoObject)) return o; //shouldn't have to... but just in case
-		if (o.GetType() == typeof(NameValueCollection) || o.GetType().IsSubclassOf(typeof(NameValueCollection)))
+		if (o is ExpandoObject) return o; //shouldn't have to... but just in case
+		if (o is NameValueCollection || o.GetType().IsSubclassOf(typeof(NameValueCollection)))
 		{
 			var nv = (NameValueCollection)o;
 			nv.Cast<string>().Select(key => new KeyValuePair<string, object>(key, nv[key])).ToList().ForEach(i => d.Add(i));
@@ -244,17 +246,6 @@ public static class Expansive
 	private static IDictionary<string, object> ToDictionary(this object thingy)
 	{
 		return (IDictionary<string, object>)thingy.ToExpando();
-	}
-
-	private static TExpected GetAttributeValue<T, TExpected>(this Enum enumeration, Func<T, TExpected> expression)
-		where T : Attribute
-	{
-		T attribute = enumeration.GetType().GetMember(enumeration.ToString())[0].GetCustomAttributes(typeof(T), false).Cast<T>().SingleOrDefault();
-
-		if (attribute == null)
-			return default(TExpected);
-
-		return expression(attribute);
 	}
 
 	#endregion

@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Expansive</id>
-    <version>1.5.1</version>
+    <version>1.5.2</version>
     <title>Expansive</title>
     <authors>Adam Anderly</authors>
     <owners>Adam Anderly</owners>
@@ -22,7 +22,7 @@
 
 Check out the readme file located here: http://github.com/anderly/Expansive to find out more.</description>
     <summary>A powerful string expansion library for .NET you never knew you always wanted.</summary>
-    <releaseNotes>Fixed bug in cycle detection by implementing an internal CallTree.</releaseNotes>
+    <releaseNotes>Minor refactoring.</releaseNotes>
     <tags>.net asp.net mvc mvc3</tags>
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System.Configuration" targetFramework=".NETFramework4.0" />
