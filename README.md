@@ -1,36 +1,25 @@
 # Expansive
 
-A powerful string expansion library for .NET you never knew you always wanted.
+### A powerful string expansion library for .NET you never knew you always wanted.
 
-# Release 1.5 Notes
-- **Breaking Change:** Removed startToken and endToken delimiters (Now use the TokenStyle Enum to select from MvcRoute style tokens, Razor style, NAnt style or MSBuild style)
-- Added **TokenStyle** Enum to select from 4 common token formats (MvcRoute-style, Razor-style, NAnt-style, MSBuild-style)
+## Why do I need it?
 
-# Release 1.4 Notes
-- Added new Expand(object model) method to allow passing in an object whose properties correspond to tokens in a string.
+Config settings, string.Format, email, SMS, push notifications, Facebook posts, Twitter posts, reports, the list goes on.
 
-# Release 1.3 Notes
-- Added Dynamic ConfigurationManager wrapper class "Config" which can be used to extract app settings and connection strings with automatic expansion support.
+We work with strings every day and it isn't fun. **Expansive** changes that by making your strings readable, intuitive, smart and...expandable!
 
-# Release 1.2 Notes
-
-- **Breaking Change:** Changed default token start and end delimiters to '{' and '}'.
-- Corrected circular reference detection logic.
-- Added additional Expand(params string[] args) method to serve as alternative to string.Format()
-- Removed Expand(startToken, endToken) method
-
-## Benefits
+## How would I use it?
 
 - Use as a more readable alternative to string.Format()
-- Easily embed appSettings tokens in strings and expand them easily.
-- Chain together appSettings tokens to reduce redundant values.
-- Embed appSettings tokens in connection strings to make them more dynamic.
+- Easily embed tokens in strings and expand them easily.
+- Chain together tokens to reduce redundant values.
+- Simple templating for emails, SMS, push notifications, Facebook posts, Twitter posts, reports, etc.
 - Use your imagination.
 
 ## Features
 
-* Uses a Func<string,string> lambda factory method for token lookup/expansion
-* Default string expansion factory using ConfigurationManager.AppSettings as the source
+* Uses a Func<string,string> lambda factory method as the source for token lookup/expansion
+* By default string tokens are expanded using ConfigurationManager.AppSettings as the source (change this to your liking)
 * Dynamic ConfigurationManager wrapper called Config wraps the Expansive API and removes need to call Expand()
 * Register your own Func<string,string> ExpansionFactory as the default string expansion factory or specify on the call to Expand()
 * 4 Token Style Formats to pick from:
@@ -39,18 +28,28 @@ A powerful string expansion library for .NET you never knew you always wanted.
  - NAnt Style     "${token}"
  - MSBuild Style  "@(token)"
 * Set your TokenStyle format globally or on a per call basis on the call to Expand()
-* Support for chained expansions from one value to another
+* Support for chained expansions from one token to another
 
-## Usage
+## How do I install it?
+
+Using NuGet:
 
 	Install-Package Expansive
+	
+**OR**
 
-### Simple MvcRoute-style Example #1 (named string formatting)
+Simply drop the code into your app and change it as you wish.
+
+## Show me the code
+
+### Simple readable alternative to string.Format() using Func&lt;string, string&gt; lamda
+
+**MvcRoute-style token**
 
 	"Hello, {name}".Expand(n => "John")
 	// returns "Hello, John"
 	
-### Simple Razor-style Example #1 (named string formatting)
+**Razor-style token**
 
 	"Hello, @name".Expand(n => "John")
 	// returns "Hello, John"
@@ -60,27 +59,29 @@ or
 	"Hello, @(name)".Expand(n => "John")
 	// returns "Hello, John"
 	
-### Simple NAnt-style Example #1 (named string formatting)
+**NAnt-style token**
 
 	"Hello, ${name}".Expand(n => "John")
 	// returns "Hello, John"
 	
-### Simple MSBuild-style Example #1 (named string formatting)
+**MSBuild-style token**
 
 	"Hello, $(name)".Expand(n => "John")
 	// returns "Hello, John"
 	
-### Simple Example #2 (named string formatting / alternative to string.Format())
+### Simple readable alternative to string.Format() using positional replacement
+
+**One token (MvcRoute-style)**
 
 	"Hello, {name}".Expand("John")
 	// returns "Hello, John"
 	
-### Simple Example #3 (named string formatting / alternative to string.Format())
+**Two tokens (MvcRoute-style)**
 
 	"Hello, {firstName} {lastName}".Expand("John","Smith")
 	// returns "Hello, John Smith"
 	
-### Simple Example #4 (named string formatting / alternative to string.Format())
+**3 tokens (MvcRoute-style), 2 single tokens, 1 composite token**
 
 	var firstName = "John";
 	var lastName = "Smith";
@@ -88,20 +89,20 @@ or
 	"Your first name is {firstName}. Your last name is {lastName}. Your full name is {fullName}".Expand(fullName, lastName, fullName)
 	// returns "Your first name is John. Your last name is Smith. Your full name is John Smith"
 
-### Simple Example #5 (using AppSettings as default source for token expansion)
+### Simple Example (using AppSettings as default source for token expansion)
 
 In app.config:
 
 	<configuration>
 		<appSettings>
-			<add key="MyAppSettingKey" value="MyAppSettingValue"/>
+			<add key="KeyForAppSetting1" value="ValueForAppSetting1"/>
 		</appSettings>
 	</configuration>
 
-Use the .Expand() extension method explicitly on the string to be expanded:
+Use the **.Expand()** extension method explicitly on the string to be expanded:
 
-	var myStringToBeExpanded = "{MyAppSettingKey} should be inserted here.";
-	myStringToBeExpanded.Expand() // returns "MyAppSettingValue should be inserted here."
+	"{KeyForAppSetting1} should be inserted here.".Expand();
+	// returns "ValueForAppSetting1 should be inserted here."
 	
 ### Moderate Example (using AppSettings as default source for token expansion)
 
@@ -117,7 +118,7 @@ In app.config:
 		</connectionStrings>
 	</configuration>
 
-Use the .Expand() extension method on the string to be expanded:
+Use the **.Expand()** extension method on the string to be expanded:
 
 	var connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
 	connectionString.Expand() // returns "server=db01.mycompany.com;uid=uid;pwd=pwd;Initial Catalog=master;"
@@ -132,7 +133,7 @@ Use the Dynamic ConfigurationManager wrapper "Config" as follows (Explicit call 
 	var connectionString = Config.ConnectionStrings.Default;
 	// returns "server=db01.mycompany.com;uid=uid;pwd=pwd;Initial Catalog=master;"
 	
-### Advanced Example #1 (using AppSettings as default source for token expansion)
+### Advanced Example 1 (using AppSettings as default source for token expansion)
 
 In app.config:
 
@@ -155,7 +156,7 @@ Use the .Expand() extension method on the string to be expanded:
 	var connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
 	connectionString.Expand() // returns "server=db01-dev.mycompany.com;uid=uid;pwd=pwd;Initial Catalog=master;"
 	
-### Advanced Example # 2 (using custom Func<string,string> lambda as default source for token expansion)
+### Advanced Example 2 (using custom Func<string,string> lambda as default source for token expansion)
 
 	var tokenValueDictionary = new Dictionary<string, string> {
 		{"setting1","The quick"}
@@ -172,8 +173,41 @@ Use the .Expand() extension method on the string to be expanded:
 	
 	or
 	
+	// Here, we specify the token expansion factory on the call to Expand()
 	Console.WriteLine("{setting5}".Expand(name => tokenValueDictionary[name]));
 	//returns "The quick brown fox jumped over the lazy dog." 
+
+### Simple model-based string templating
+
+	var model = new { FirstName = "John" };
+
+	// MvcRoute-Style (default)
+	var mvcRouteStyleString = "Hello, {FirstName}".Expand(model);
+
+	// Razor-Style
+	Expansive.SetDefaultTokenStyle(TokenStyle.Razor);
+	var razorStyleString = "Hello, @FirstName".Expand(model);
+
+	// NAnt-Style
+	Expansive.SetDefaultTokenStyle(TokenStyle.NAnt);
+	var nantStyleString = "Hello, ${FirstName}".Expand(model);
+
+	// MSBuild-Style
+	Expansive.SetDefaultTokenStyle(TokenStyle.MSBuild);
+	var msBuildStyleString = "Hello, $(FirstName)".Expand(model);
+
+	// All return "Hello, John"
+	
+### Moderate model-based string templating
+
+	var model = new { 
+		FirstName = "John",
+		LastName = "Smith",
+		FullName = "{FirstName} {LastName}"
+	};
+
+	"FullName:{FullName}".Expand(model);
+	// Returns "FullName:John Smith"
 
 ## Copyright
 
