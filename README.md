@@ -26,7 +26,7 @@ We work with strings every day and it isn't fun. **Expansive** changes that by m
  - MvcRoute Style "{token}" (default)
  - Razor Style    "@token" or "@(token)"
  - NAnt Style     "${token}"
- - MSBuild Style  "@(token)"
+ - MSBuild Style  "$(token)"
 * Set your TokenStyle format globally or on a per call basis on the call to Expand()
 * Support for chained expansions from one token to another
 
