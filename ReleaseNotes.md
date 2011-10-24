@@ -1,3 +1,14 @@
+# Release 1.5.3
+- **Breaking Change:** Removed SetDefaultExpansionFactory and SetDefaultTokenStyle methods and created public properties for these instead.
+- Added RequireAllExpansions property for multi-model chaining.
+- Added support for passing multiple models via new Expand(params object[] models) method.
+
+# Release 1.5.2
+- Minor refactoring
+
+# Release 1.5.1
+- Fixed bug in cycle detection logic by implementing an internal CallTree.
+
 # Release 1.5 
 - **Breaking Change:** Removed startToken and endToken delimiters (Now use the TokenStyle Enum to select from MvcRoute style tokens, Razor style, NAnt style or MSBuild style)
 - Added **TokenStyle** Enum to select from 4 common token formats (MvcRoute-style, Razor-style, NAnt-style, MSBuild-style)
