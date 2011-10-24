@@ -2,6 +2,8 @@
 
 ### A powerful string expansion library for .NET you never knew you always wanted.
 
+### View the [Release Notes](http://github.com/anderly/Expansive/ReleaseNotes.md) to see change history.
+
 ## Why do I need it?
 
 Config settings, string.Format, email, SMS, push notifications, Facebook posts, Twitter posts, reports, the list goes on.
