@@ -168,7 +168,7 @@ Use the .Expand() extension method on the string to be expanded:
 		,{"setting5","{setting4}"}
 	};
 
-	Expansive.SetDefaultExpansionFactory(name => tokenValueDictionary[name]);
+	Expansive.DefaultExpansionFactory = name => tokenValueDictionary[name];
 
 	Console.WriteLine("{setting5}".Expand());
 	//returns "The quick brown fox jumped over the lazy dog."
@@ -187,15 +187,15 @@ Use the .Expand() extension method on the string to be expanded:
 	var mvcRouteStyleString = "Hello, {FirstName}".Expand(model);
 
 	// Razor-Style
-	Expansive.SetDefaultTokenStyle(TokenStyle.Razor);
+	Expansive.DefaultTokenStyle = TokenStyle.Razor;
 	var razorStyleString = "Hello, @FirstName".Expand(model);
 
 	// NAnt-Style
-	Expansive.SetDefaultTokenStyle(TokenStyle.NAnt);
+	Expansive.DefaultTokenStyle = TokenStyle.NAnt;
 	var nantStyleString = "Hello, ${FirstName}".Expand(model);
 
 	// MSBuild-Style
-	Expansive.SetDefaultTokenStyle(TokenStyle.MSBuild);
+	Expansive.DefaultTokenStyle = TokenStyle.MSBuild;
 	var msBuildStyleString = "Hello, $(FirstName)".Expand(model);
 
 	// All return "Hello, John"
