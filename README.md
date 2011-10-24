@@ -2,7 +2,7 @@
 
 ### A powerful string expansion library for .NET you never knew you always wanted.
 
-### View the [Release Notes](http://github.com/anderly/Expansive/ReleaseNotes.md) to see change history.
+### View the [Release Notes](https://github.com/anderly/Expansive/blob/master/ReleaseNotes.md) to see change history.
 
 ## Why do I need it?
 
