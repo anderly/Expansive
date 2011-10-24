@@ -20,42 +20,38 @@ public enum TokenStyle
 
 public static class Expansive
 {
-	private static Func<string, string> _expansionFactory;
-	private static TokenStyle _tokenStyle = TokenStyle.MvcRoute;
+	private static Dictionary<TokenStyle, PatternStyle> _patternStyles;
 
-	private static Dictionary<TokenStyle, PatternStyle> patternStyles;
+	#region : Public Properties :
+	
+	public static bool RequireAllExpansions { get; set; }
+
+	public static Func<string, string> DefaultExpansionFactory { get; set; }
+
+	public static TokenStyle DefaultTokenStyle { get; set; }
+
+	#endregion : Public Properties :
 
 	static Expansive()
 	{
 		Initialize();
 	}
 
-	public static void SetDefaultExpansionFactory(Func<string, string> expansionFactory)
-	{
-		if (expansionFactory == null) throw new ArgumentOutOfRangeException("expansionFactory", "expansionFactory cannot be null");
-		_expansionFactory = expansionFactory;
-	}
-
-	public static void SetDefaultTokenStyle(TokenStyle tokenStyle)
-	{
-		_tokenStyle = tokenStyle;
-	}
-
 	public static string Expand(this string source)
 	{
-		return source.Expand(_expansionFactory);
+		return source.Expand(DefaultExpansionFactory);
 	}
 
 	public static string Expand(this string source, TokenStyle tokenStyle)
 	{
-		return source.ExpandInternal(_expansionFactory, tokenStyle);
+		return source.ExpandInternal(DefaultExpansionFactory, tokenStyle);
 	}
 
 	public static string Expand(this string source, params string[] args)
 	{
 		var output = source;
 		var tokens = new List<string>();
-		var patternStyle = patternStyles[_tokenStyle];
+		var patternStyle = _patternStyles[DefaultTokenStyle];
 		var pattern = new Regex(patternStyle.TokenMatchPattern, RegexOptions.IgnoreCase);
 		var calls = new Stack<string>();
 		string callingToken = null;
@@ -102,7 +98,7 @@ public static class Expansive
 
 	public static string Expand(this string source, Func<string, string> expansionFactory)
 	{
-		return source.ExpandInternal(expansionFactory, _tokenStyle);
+		return source.ExpandInternal(expansionFactory, DefaultTokenStyle);
 	}
 
 	public static string Expand(this string source, Func<string, string> expansionFactory, TokenStyle tokenStyle)
@@ -112,20 +108,54 @@ public static class Expansive
 
 	public static string Expand(this string source, object model)
 	{
-		return source.ExpandInternal(name => model.ToDictionary()[name].ToString(), _tokenStyle);
+		return source.Expand(model, DefaultTokenStyle);
+	}
+
+	public static string Expand(this string source, params object[] models)
+	{
+		var mergedModel = new ExpandoObject().ToDictionary();
+		models.ToList().ForEach(m =>
+			{
+				var md = m.ToDictionary();
+				var keys = md.Keys;
+				keys.ToList().ForEach(k =>
+					{
+						if (!mergedModel.ContainsKey(k)) {
+							mergedModel.Add(k, md[k]);
+						}
+					});
+			});
+		return source.Expand(mergedModel as ExpandoObject);
 	}
 
 	public static string Expand(this string source, object model, TokenStyle tokenStyle)
 	{
-		return source.ExpandInternal(name => model.ToDictionary()[name].ToString(), tokenStyle);
+		return source.ExpandInternal(
+				name =>
+				{
+					IDictionary<string, object> modelDict = model.ToDictionary();
+					if (RequireAllExpansions && !modelDict.ContainsKey(name))
+					{
+						return "";
+					}
+
+					if (modelDict[name] == null)
+					{
+						return "";
+					}
+
+					return modelDict[name].ToString();
+				}
+				, tokenStyle);
 	}
 
 	#region : Private Helper Methods :
 
 	private static void Initialize()
 	{
-		_expansionFactory = name => ConfigurationManager.AppSettings[name];
-		patternStyles = new Dictionary<TokenStyle, PatternStyle>
+		DefaultExpansionFactory = name => ConfigurationManager.AppSettings[name];
+		DefaultTokenStyle = TokenStyle.MvcRoute;
+		_patternStyles = new Dictionary<TokenStyle, PatternStyle>
 		                	{
 		                		{
 		                			TokenStyle.MvcRoute, new PatternStyle
@@ -171,9 +201,9 @@ public static class Expansive
 
 	private static string ExpandInternal(this string source, Func<string, string> expansionFactory, TokenStyle tokenStyle)
 	{
-		if (expansionFactory == null) throw new ApplicationException("ExpansionFactory not defined.\nUse SetDefaultExpansionFactory(Func<string, string> expansionFactory) to define a default ExpansionFactory or call Expand(source, Func<string, string> expansionFactory))");
+		if (expansionFactory == null) throw new ApplicationException("ExpansionFactory not defined.\nDefine a DefaultExpansionFactory or call Expand(source, Func<string, string> expansionFactory))");
 
-		var patternStyle = patternStyles[tokenStyle];
+		var patternStyle = _patternStyles[tokenStyle];
 		var pattern = new Regex(patternStyle.TokenMatchPattern, RegexOptions.IgnoreCase);
 
 		var callTreeParent = new Tree<string>("root").Root;
@@ -195,12 +225,15 @@ public static class Expansive
 
 				// if we have already encountered this token in this call tree, we have a circular reference
 				if (thisNode.CallTree.Contains(token))
-					throw new CircularReferenceException(string.Format("Circular Reference Detected for token '{0}'. Call Tree: {1}>{2}",
+					throw new CircularReferenceException(string.Format("Circular Reference Detected for token '{0}'. Call Tree: {1}->{2}",
 																	   token,
-					                                                   String.Join(">", thisNode.CallTree.ToArray().Reverse()), token));
+					                                                   String.Join("->", thisNode.CallTree.ToArray().Reverse()), token));
+
+				// expand this match
+				var expandedValue = expansionFactory(token);
 
 				// Replace the match with the expanded value
-				child = Regex.Replace(child, patternStyle.OutputFilter(match.Value), expansionFactory(token));
+				child = Regex.Replace(child, patternStyle.OutputFilter(match.Value), expandedValue);
 
 				// Recursively expand the child until we no longer encounter nested tokens (or hit a circular reference)
 				child = child.Explode(pattern, patternStyle, expansionFactory, thisNode);
