@@ -210,6 +210,21 @@ Use the .Expand() extension method on the string to be expanded:
 
 	"FullName:{FullName}".Expand(model);
 	// Returns "FullName:John Smith"
+	
+### Advanced multi-model-based string templating
+
+	var model1 = new { 
+		FirstName = "John",
+		LastName = "Smith",
+		FullName = "{FirstName} {LastName}"
+	};
+	
+	var model2 = new {
+		EmailAddress = "john.smith@gmail.com"
+	}
+
+	"FullName:{FullName} ({EmailAddress})".Expand(model1, model2);
+	// Returns "FullName:John Smith (john.smith@gmail.com)"
 
 ## Copyright
 
