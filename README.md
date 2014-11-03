@@ -1,5 +1,6 @@
 # Expansive
-
+[![Nuget version](http://img.shields.io/nuget/v/expansive.svg?style=flat)](http://www.nuget.org/Packages/Expansive)
+[![License](http://img.shields.io/badge/license-MS--PL-red.svg?style=flat)](http://opensource.org/licenses/MS-PL)
 ### A powerful string expansion library for .NET you never knew you always wanted.
 
 ### View the [Release Notes](https://github.com/anderly/Expansive/blob/master/ReleaseNotes.md) to see change history.
