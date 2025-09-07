@@ -113,6 +113,15 @@ public static class Expansive
 
 	public static string Expand(this string source, params object[] models)
 	{
+		// Check if we should use positional expansion instead of model-based expansion
+		if (ShouldUsePositionalExpansion(source, models))
+		{
+			// Convert objects to strings and use positional expansion
+			var stringArgs = models.Select(m => m?.ToString() ?? "").ToArray();
+			return source.Expand(stringArgs);
+		}
+		
+		// Use existing model-based expansion logic
 		var mergedModel = new ExpandoObject().ToDictionary();
 		models.ToList().ForEach(m =>
 			{
@@ -130,6 +139,15 @@ public static class Expansive
 
 	public static string Expand(this string source, object model, TokenStyle tokenStyle)
 	{
+		// Check if we should use positional expansion instead of model-based expansion
+		if (ShouldUsePositionalExpansion(source, new[] { model }))
+		{
+			// Convert object to string and use positional expansion
+			var stringArg = model?.ToString() ?? "";
+			return source.Expand(stringArg);
+		}
+		
+		// Use existing model-based expansion logic
 		return source.ExpandInternal(
 				name =>
 				{
@@ -139,7 +157,7 @@ public static class Expansive
 						return "";
 					}
 
-					if (modelDict[name] == null)
+					if (!modelDict.ContainsKey(name) || modelDict[name] == null)
 					{
 						return "";
 					}
@@ -150,6 +168,48 @@ public static class Expansive
 	}
 
 	#region : Private Helper Methods :
+
+	private static bool ShouldUsePositionalExpansion(string source, object[] models)
+	{
+		// Extract tokens from the source string
+		var tokens = ExtractTokens(source, DefaultTokenStyle);
+		
+		// Check if any model has properties that match the extracted tokens
+		foreach (var model in models)
+		{
+			if (model == null) continue;
+			
+			// Get properties of the model
+			var properties = model.GetType().GetProperties().Select(p => p.Name).ToHashSet();
+			
+			// If any token matches a property name, use model-based expansion
+			if (tokens.Any(token => properties.Contains(token)))
+			{
+				return false; // Use model-based expansion
+			}
+		}
+		
+		// No properties match tokens, so use positional expansion
+		return true;
+	}
+
+	private static List<string> ExtractTokens(string source, TokenStyle tokenStyle)
+	{
+		var tokens = new List<string>();
+		var patternStyle = _patternStyles[tokenStyle];
+		var pattern = new Regex(patternStyle.TokenMatchPattern, RegexOptions.IgnoreCase);
+		
+		foreach (Match match in pattern.Matches(source))
+		{
+			var token = patternStyle.TokenReplaceFilter(match.Value);
+			if (!tokens.Contains(token))
+			{
+				tokens.Add(token);
+			}
+		}
+		
+		return tokens;
+	}
 
 	private static void Initialize()
 	{
